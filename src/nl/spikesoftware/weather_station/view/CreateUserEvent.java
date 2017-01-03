@@ -1,6 +1,5 @@
 package nl.spikesoftware.weather_station.view;
 
-
 public class CreateUserEvent {
 	private String name;
 	private String password;

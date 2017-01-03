@@ -1,32 +1,51 @@
 package nl.spikesoftware.weather_station.controller;
 
-import java.sql.SQLException;
-
 import nl.spikesoftware.weather_station.view.*;
 import nl.spikesoftware.weather_station.model.*;
 
-public class Controller implements CreateUserListener {
+public class Controller implements CreateUserListener, SaveListener,
+		AppListener {
 	private View view;
 	private Model model;
-	
-	private PersonDAO personDAO = DAOFactory.getPersonDAO();
-	
+
 	public Controller(View view, Model model) {
 		this.view = view;
 		this.model = model;
 	}
 
 	@Override
-	public void userCreated(CreateUserEvent event) {
-		System.out.println("Login event received: " + event.getName() + "; " + event.getPassword());
-		
+	public void onUserCreated(CreateUserEvent event) {
+
+		model.addPerson(new Person(event.getName(), event.getPassword()));
+	}
+
+	@Override
+	public void onSave() {
 		try {
-			personDAO.addPerson(new Person(event.getName(), event.getPassword()));
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			model.save();
+		} catch (Exception e) {
+			view.showError("Error saving to database.");
 		}
 	}
-	
-	
+
+	@Override
+	public void onOpen() {
+		try {
+			Database.getInstance().connect();
+		} catch (Exception e) {
+			view.showError("Cannot connect to database.");
+		}
+
+		try {
+			model.load();
+		} catch (Exception e) {
+			view.showError("Error loading data from database.");
+		}
+	}
+
+	@Override
+	public void onClose() {
+		Database.getInstance().disconnect();
+	}
+
 }
